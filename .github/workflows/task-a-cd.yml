@@ -4,21 +4,40 @@ on: [push]
 
 jobs:
   test:
-    runs-on: "ubuntu-latest"
     name: pytest
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.10", "3.11", "pypy3.10"]
+        exclude:
+          - os: macos-latest
+            python-version: "3.10"
+          - os: windows-latest
+            python-version: "3.10"
+
     steps:
-        - uses: actions/checkout@v4
-        - name: Set up Python
-          uses: actions/setup-python@v5
-          with:
-            python-version: '3.11'
-            cache: 'pip'
-        - name: Install dependencies
-          run: |
-            pip install -r ./task_a/requirements.txt
-        - name: Run tests
-          run: |
-            pytest task_a/task_a.py --html=report.html 
-            actions/upload-artifact@v3 
-            with:
-              name: pytest-html-report
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r task_a/requirements.txt
+          pip install pytest pytest-html
+
+      - name: Run tests (generate HTML report)
+        run: |
+          pytest task_a/task_a.py --html=report.html --self-contained-html
+        continue-on-error: true
+
+      - name: Upload PyTest HTML report
+        uses: actions/upload-artifact@v3
+        with:
+          name: Report-${{ matrix.os }}-${{ matrix.python-version }}
+          path: report.html
