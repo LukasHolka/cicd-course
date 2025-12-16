@@ -19,7 +19,8 @@ jobs:
         - name: Run tests
           run: |
             pytest task_a/task_a.py
-        - name: Html
-          uses:actions/upload-artifact@v3
-          with:
-            name: pytest-report 
+        - name: Upload HTML report
+                uses: actions/upload-artifact@v3
+                with:
+                  name: pytest-report
+                  path: pytest-report.html
